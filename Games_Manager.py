@@ -51,8 +51,8 @@ class Group:
 
 
 class Game:
-    def __init__(self,time):
-        self.date = time
+    def __init__(self):
+        self.date = time = datetime.datetime.now()
         self.duration = None
         self.rounds_played = 0
         self.players = []  # List of Player objects
@@ -63,11 +63,12 @@ class Game:
     
     def start_game(self):
         start_time = datetime.datetime.now()
-        New_Game_instance = New_Game()
+        new_game_instance = New_Game()
+
         end_time = datetime.datetime.now()
 
-    def check_if_game_valid(self):
-        pass
+        self.duration = end_time - start_time
+
 
 
 class Game_Manager:
@@ -75,7 +76,7 @@ class Game_Manager:
     def __init__(self):
             self.players_dict: dict[str, Player] = {} # key: player_name, value: Player object
             self.groups_dict: dict[str, Group] = {} # key: group_name, value: Group object
-            self.games_history = [] # list of Game objects
+            self.games_history_list: list[Game] = [] # list of Game objects
 
             print("\n================================= Welcome to the Board Game! =================================\n")
             self._main_menu()
@@ -93,18 +94,16 @@ class Game_Manager:
             choice = input("\nPlease select an option:\n")
             
             if choice == '1':
-                time = datetime.datetime.now()
-                self.games_history.append(time)  
-                New_Game_instance = Game(time)     
+                self._create_new_game()   
                  
             elif choice == '2':
                 self._player_manager_menu()
 
             elif choice == '3':
-                pass # Logic to view glory hall would go here
+                self.glory_hall()
 
             elif choice == '4':
-                pass # Logic to view games history would go here
+                self.games_history()
 
             elif choice == '5':
                 print("\n=================================Exiting the Game. Goodbye!=================================\n")
@@ -151,6 +150,11 @@ class Game_Manager:
 
             else:
                 print("\nInvalid choice. Please try again.\n")
+
+    def _create_new_game(self):
+
+        new_game = Game()
+        self.games_history_list.append(new_game)
 
     def add_player(self):
         while True:
@@ -390,8 +394,7 @@ class Game_Manager:
             player_list[i], player_list[max_index] = player_list[max_index], player_list[i]
 
         return player_list[:5]  # Return top 5 players
-    
-    
+     
     def _sort_groups_by_score(self):
         groups_list = list(self.groups_dict.values())
 
@@ -416,7 +419,8 @@ class Game_Manager:
         else:
             index = 1
             for player in self._sort_players_by_score():
-                print(f"{index}. Player: {player.name} {("-")*(20-len(player.name))} {player.score} pts")
+                indent = ('-')*(20-len(player.name))
+                print(f"{index}. Player: {player.name} {indent} {player.score} pts")
                 index += 1
             
         print("\n=====Top 5 Groups=====")
@@ -425,10 +429,24 @@ class Game_Manager:
         else:
             index = 1
             for group in self._sort_groups_by_score():
-                print(f"{index}.Group: {group.group_name} {("-")*(20-len(group.group_name))} {group.get_total_score()} pts")
+                indent = ('-')*(20-len(group.group_name))
+                print(f"{index}.Group: {group.group_name} {indent} {group.get_total_score()} pts")
                 index += 1
         
         print("\n=================================\n")
 
     def games_history(self):
-        pass
+        print("\n===============Game history===============\n")
+
+        if not self.games_history_list:
+            print("No games played yet.\n")
+        else:
+            index = 1
+            for game in self.games_history_list:
+                print(f"{index}. Date: {game.date}\n"
+                      f"Duration: {game.duration}\n"
+                      f"Rounds: {game.rounds_played}\n"
+                      f"Winner: {game.winner} , Loser: {game.loser}")
+                index += 1
+        
+        print("\n=================================\n")
