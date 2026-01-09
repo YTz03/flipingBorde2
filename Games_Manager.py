@@ -15,10 +15,19 @@ class Player:
         return self.score
     
     def update_score(self, points):
-        self.score += points
+        new_score = self.score + points
+
+        if new_score >= 0:
+            self.score = new_score
+
+        else:
+            self.score = 0
+
+    def print_player_score(self):
+        print(f"\nPlayer: {self.name}, Score: {self.score}")
 
     def __str__(self):
-        return f"\nPlayer(Name: {self.name}, Age: {self.age}, Group: {self.group})\n"
+        return f"\nPlayer(Name: {self.name}, Age: {self.age}, Group: {self.group}, score: {self.score}\n"
 
 
 class Group:
@@ -51,24 +60,62 @@ class Group:
 
 
 class Game:
-    def __init__(self):
-        self.date = time = datetime.datetime.now()
-        self.duration = None
+    def __init__(self, player1: Player, player2: Player):
+        self.date = datetime.datetime.now()
+        self.duration = 0
         self.rounds_played = 0
-        self.players = []  # List of Player objects
-        self.winner = None
-        self.loser = None
+        self.players = [player1, player2]  # List of Player objects
+        self.winner:Player = None
+        self.loser:Player = None
+        self.draw = False
 
         self.start_game()
     
-    def start_game(self):
-        start_time = datetime.datetime.now()
-        new_game_instance = New_Game()
+    def start_game(self):        
 
-        end_time = datetime.datetime.now()
+        new_game_instet =  New_Game(self.players[0].name, self.players[1].name)
+        game_result, self.rounds_played, self.duration = new_game_instet.play() # 
 
-        self.duration = end_time - start_time
+        if game_result != 0: # if not a draw
+            self.winner = self.players[game_result - 1]
+            self.loser = self.players[1 - (game_result - 1)]
 
+            self.winner.update_score(3)  # Winner gets 3 points
+            self.loser.update_score(-1)    # Loser lose 1 points
+
+        else: # draw
+            self.draw = True
+            for player in self.players:
+                player.update_score(1)  # Both players get 1 points for a draw
+
+        self._game_summary()
+    
+    def _game_summary(self):
+        print("\n===============Game Summary===============\n")
+
+        print(f"Date: {self.date}")
+
+        if self.draw:
+            print(f"Game ended in a draw, Rounds Played: {self.rounds_played}, Duration: {self.duration}")
+            
+        else:
+            print(f"Winner: {self.winner.name}, Loser: {self.loser.name}, Rounds Played: {self.rounds_played}, Duration: {self.duration}")
+        
+        for player in self.players:
+            player.print_player_score()
+
+        print("\n=================================\n")
+
+    def game_info(self, index):
+
+        print(f"{index}. Date: {self.date}\n"
+                    f"Duration: {self.duration}\n"
+                    f"Rounds: {self.rounds_played}\n")
+        if self.draw:
+            print(f"Draw ({self.players[0].name} VS {self.players[1].name})")              
+            
+        else:
+            print(f"Winner: {self.winner} , Loser: {self.loser}")
 
 
 class Game_Manager:
@@ -81,6 +128,8 @@ class Game_Manager:
             print("\n================================= Welcome to the Board Game! =================================\n")
             self._main_menu()
 
+
+# main menu 
     def _main_menu(self):
 
         while True:
@@ -94,7 +143,7 @@ class Game_Manager:
             choice = input("\nPlease select an option:\n")
             
             if choice == '1':
-                self._create_new_game()   
+                self.create_new_game()   
                  
             elif choice == '2':
                 self._player_manager_menu()
@@ -112,6 +161,87 @@ class Game_Manager:
             else:
                 print("\nInvalid choice. Please try again.\n")
 
+    def create_new_game(self):
+        print("\n===============Starting a new game===============\n")
+
+        while True:
+
+            if len(self.players_dict) < 2:
+                print("Not enough players to start a new game. Please add more players.\n")
+                break
+
+            print("\nChoose player1 for the new game\n")
+            self._print_players()
+
+            player1_number = input("Enter the player number for player1: ")
+            palyer2_number = input("Enter the player number for player2: ")
+
+            if player1_number == '0' or palyer2_number == '0':
+                print("\nNew game cancelled.\n")
+                break
+
+            elif player1_number == palyer2_number:
+                print("\nPlayer1 and Player2 cannot be the same. Please try again.\n")
+
+            elif not player1_number.isdigit() or int(player1_number) < 1 or int(player1_number) > len(self.players_dict):
+                print("\nInvalid player1 number. Please try again.\n")
+            
+            elif not palyer2_number.isdigit() or int(palyer2_number) < 1 or int(palyer2_number) > len(self.players_dict):
+                print("\nInvalid player2 number. Please try again.\n")
+
+            else:
+                player1 = list(self.players_dict.values())[int(player1_number) - 1]
+                player2 = list(self.players_dict.values())[int(palyer2_number) - 1]
+                
+                if max(player1.age, player2.age) - min(player1.age, player2.age) > 10:
+                    print("\nThe age difference between players cannot exceed 10 years. New game cancelled.\n")
+                    break
+
+                else:
+                    new_game_obj = Game(player1.name, player2.name)
+                    self.games_history_list.append(new_game_obj)   
+                    break          
+
+    def glory_hall(self):
+        print("\n===============Glory hall===============\n")
+
+        print("\n=====Top 5 Players=====")
+        if not self.players_dict:
+            print("No players yet.\n")
+        else:
+            index = 1
+            for player in self._sort_players_by_score():
+                indent = ('-')*(20-len(player.name))
+                print(f"{index}. Player: {player.name} {indent} {player.score} pts")
+                index += 1
+            
+        print("\n=====Top 5 Groups=====")
+        if not self.groups_dict:
+            print("No groups yet.\n")
+        else:
+            index = 1
+            for group in self._sort_groups_by_score():
+                indent = ('-')*(20-len(group.group_name))
+                print(f"{index}.Group: {group.group_name} {indent} {group.get_total_score()} pts")
+                index += 1
+        
+        print("\n=================================\n")
+
+    def games_history(self):
+        print("\n===============Game history===============\n")
+
+        if not self.games_history_list:
+            print("No games played yet.\n")
+        else:
+            index = 1
+            for game in self.games_history_list:
+                game.game_info(index)
+                index += 1
+        
+        print("\n=================================\n")
+
+
+# players manager menu
     def _player_manager_menu(self):
         while True:
             print("\n=========================Players Manager=========================\n")
@@ -150,11 +280,6 @@ class Game_Manager:
 
             else:
                 print("\nInvalid choice. Please try again.\n")
-
-    def _create_new_game(self):
-
-        new_game = Game()
-        self.games_history_list.append(new_game)
 
     def add_player(self):
         while True:
@@ -328,6 +453,8 @@ class Game_Manager:
                 if group.mother_group is None:
                     self._print_group_tree(group, 0)
 
+
+# helpter methods
     def _print_group_tree(self, group, level):
 
         indent_group = "    " * level
@@ -410,43 +537,3 @@ class Game_Manager:
         
         return groups_list[:5]  # Return top 5 groups
 
-    def glory_hall(self):
-        print("\n===============Glory hall===============\n")
-
-        print("\n=====Top 5 Players=====")
-        if not self.players_dict:
-            print("No players yet.\n")
-        else:
-            index = 1
-            for player in self._sort_players_by_score():
-                indent = ('-')*(20-len(player.name))
-                print(f"{index}. Player: {player.name} {indent} {player.score} pts")
-                index += 1
-            
-        print("\n=====Top 5 Groups=====")
-        if not self.groups_dict:
-            print("No groups yet.\n")
-        else:
-            index = 1
-            for group in self._sort_groups_by_score():
-                indent = ('-')*(20-len(group.group_name))
-                print(f"{index}.Group: {group.group_name} {indent} {group.get_total_score()} pts")
-                index += 1
-        
-        print("\n=================================\n")
-
-    def games_history(self):
-        print("\n===============Game history===============\n")
-
-        if not self.games_history_list:
-            print("No games played yet.\n")
-        else:
-            index = 1
-            for game in self.games_history_list:
-                print(f"{index}. Date: {game.date}\n"
-                      f"Duration: {game.duration}\n"
-                      f"Rounds: {game.rounds_played}\n"
-                      f"Winner: {game.winner} , Loser: {game.loser}")
-                index += 1
-        
-        print("\n=================================\n")
