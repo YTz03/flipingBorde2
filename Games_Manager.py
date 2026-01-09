@@ -37,15 +37,14 @@ class Group:
         self.players.remove(player)
 
     def get_total_score(self):
-            # 1. חישוב הניקוד של השחקנים הישירים בקבוצה הזו
+            # get the score of players in the current group
             current_total = sum(player.score for player in self.players)
             
-            # 2. חישוב הניקוד של כל תתי-הקבוצות (רקורסיה)
+            # get the total score of sub-groups recursively
             for sub_group in self.sub_groups:
-                current_total += sub_group.get_total_score() # <--- כאן הפונקציה קוראת לעצמה
+                current_total += sub_group.get_total_score() 
                 
             return current_total
-
 
     def __str__(self):
         return f"\nGroup(Name: {self.group_name}, Players: {[str(player) for player in self.players]})\n"
@@ -56,6 +55,7 @@ class Game:
         self.date = time
         self.duration = None
         self.rounds_played = 0
+        self.players = []  # List of Player objects
         self.winner = None
         self.loser = None
 
@@ -73,8 +73,8 @@ class Game:
 class Game_Manager:
 
     def __init__(self):
-            self.players_dict = {} # key: player_name, value: Player object
-            self.groups_dict = {} # key: group_name, value: Group object
+            self.players_dict: dict[str, Player] = {} # key: player_name, value: Player object
+            self.groups_dict: dict[str, Group] = {} # key: group_name, value: Group object
             self.games_history = [] # list of Game objects
 
             print("\n================================= Welcome to the Board Game! =================================\n")
@@ -90,7 +90,7 @@ class Game_Manager:
             print("4. View Games History")
             print("5. Exit")
             
-            choice = input("Please select an option: ")
+            choice = input("\nPlease select an option:\n")
             
             if choice == '1':
                 time = datetime.datetime.now()
@@ -123,10 +123,10 @@ class Game_Manager:
             print("5. Players and groups tree")
             print("6. Exit Players Manager")
             
-            choice = input("Please select an option: ")
+            choice = input("\nPlease select an option:\n")
             
             if choice == '1': 
-                print("'n===============Adding a new player===============\n")
+                print("\n===============Adding a new player===============\n")
                 self.add_player()
 
             elif choice == '2':
@@ -143,7 +143,7 @@ class Game_Manager:
 
             elif choice == '5':
                 print("\n===============Players and groups tree===============\n")
-                self._players_and_groups_tree()   
+                self.players_and_groups_tree()   
 
             elif choice == '6':
                 print("\n===============Exiting Players Manager......\n")
@@ -162,12 +162,17 @@ class Game_Manager:
 
             player_name = input("Enter player name: ")
             player_age = input("Enter player age (Year's only): ")
-            player_group_choise = input("Whould you like to assign the player to a group ? (y/n): ")
+
+            if not self.groups_dict: # check if there are no groups befor asking the player to choose a group
+                print("\nNo groups available\n")
+                player_group_choise = 'n'
+            else:
+                player_group_choise = input("Whould you like to assign the player to a group ? (y/n): ")
 
             if player_name in self.players_dict:
                 print("\nPlayer already exists. Please choose a different name.\n")
 
-            elif (player_name is None or not player_name.isalpha()):
+            elif not self._validate_name(player_name):
                 print("\nInvalid name. Please enter a valid name.\n")
 
             elif (player_age is None or not player_age.isdigit()
@@ -232,12 +237,17 @@ class Game_Manager:
                 break
 
             group_name = input("Enter the new group name: ")
-            mother_group_choise = input("Would you like to assign a mother group ? (y/n): ")
+
+            if not self.groups_dict: # check if there are no groups befor asking the player to choose a group
+                print("\nNo groups available\n")
+                mother_group_choise = 'n'
+            else:
+                mother_group_choise = input("Would you like to assign a mother group ? (y/n): ")
 
             if group_name in self.groups_dict:
                 print("\nGroup already exists. Please choose a different name.\n")
 
-            elif group_name is None or not group_name.isalpha():
+            elif not self._validate_name(group_name):
                 print("\nInvalid group name. Please enter a valid name.\n")
             
             elif mother_group_choise == 'n':
@@ -302,23 +312,123 @@ class Game_Manager:
     
     def players_and_groups_tree(self):
         print("\n===============Players and Groups Tree===============\n")
-        pass # Logic to display players and groups tree would go here
+        if not self.players_dict and not self.groups_dict:
+            print("No players or groups available.\n")
+
+        else:
+            for player in self.players_dict.values():
+                if player.group is None:
+                    print(f"|-- {player.name} (Score: {player.score})")
+            
+            for group in self.groups_dict.values():
+                if group.mother_group is None:
+                    self._print_group_tree(group, 0)
+
+    def _print_group_tree(self, group, level):
+
+        indent_group = "    " * level
+        indent_player = "    " * (level + 1)
+
+        print(f"{indent_group}|-- [Group] {group.group_name} (Total Score: {group.get_total_score()})")
+        
+        for player in group.players:
+            print(f"{indent_player}|-- {player.name} (Score: {player.score})")
+        
+        for sub_group in group.sub_groups:
+            self._print_group_tree(sub_group, level + 1)
 
     def _print_groups(self):
         print("\n Available Groups: \n")
-        print("0. Cancel\n")
-        number = 1
-        for group in self.groups_dict.values():
-            print(f"{number}. {group}")
-            number += 1
-    
+
+        if not self.groups_dict:
+            print("No groups available.\n")
+
+        else:   
+            print("0. Cancel\n")
+            number = 1
+            for group in self.groups_dict.values():
+                print(f"{number}. {group}")
+                number += 1
+        
     def _print_players(self):
-        print("\n Available Players: \n")
-        print("0. Cancel\n")
-        number = 1
-        for player in self.players_dict.values():
-            print(f"{number}. {player}")
-            number += 1
+        if not self.players_dict and not self.groups_dict:
+            print("No players available.\n")
+
+        else:
+            print("\n Available Players: \n")
+            print("0. Cancel\n")
+            number = 1
+            for player in self.players_dict.values():
+                print(f"{number}. {player}")
+                number += 1
+        
+    def _validate_name(self, name):
+        
+        if not name:
+            return False
+
+        elif len(name) < 2 or len(name) > 15:
+            return False
+        
+        for char in name:
+            if not char.isalpha() and not char.isspace() and not char.isdigit():
+                return False
+        
+        return True
+
+    def _sort_players_by_score(self):
+        player_list = list(self.players_dict.values())
+
+
+        player_len = len(player_list)
+        for i in range(player_len):
+            max_index = i
+
+            for j in range(i + 1, player_len):
+                if player_list[j].score > player_list[max_index].score:
+                    max_index = j
+            player_list[i], player_list[max_index] = player_list[max_index], player_list[i]
+
+        return player_list[:5]  # Return top 5 players
     
+    
+    def _sort_groups_by_score(self):
+        groups_list = list(self.groups_dict.values())
 
+        group_len = len(groups_list)
 
+        for i in range(group_len):
+            max_index = i
+
+            for j in range(i + 1, group_len):
+                if groups_list[j].get_total_score() > groups_list[max_index].get_total_score():
+                    max_index = j
+            groups_list[i], groups_list[max_index] = groups_list[max_index], groups_list[i]
+        
+        return groups_list[:5]  # Return top 5 groups
+
+    def glory_hall(self):
+        print("\n===============Glory hall===============\n")
+
+        print("\n=====Top 5 Players=====")
+        if not self.players_dict:
+            print("No players yet.\n")
+        else:
+            index = 1
+            for player in self._sort_players_by_score():
+                print(f"{index}. Player: {player.name} {("-")*(20-len(player.name))} {player.score} pts")
+                index += 1
+            
+        print("\n=====Top 5 Groups=====")
+        if not self.groups_dict:
+            print("No groups yet.\n")
+        else:
+            index = 1
+            for group in self._sort_groups_by_score():
+                print(f"{index}.Group: {group.group_name} {("-")*(20-len(group.group_name))} {group.get_total_score()} pts")
+                index += 1
+        
+        print("\n=================================\n")
+
+    def games_history(self):
+        pass
