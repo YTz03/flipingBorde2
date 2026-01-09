@@ -36,6 +36,16 @@ class Group:
     def remove_player(self, player):
         self.players.remove(player)
 
+    def get_total_score(self):
+            # 1. חישוב הניקוד של השחקנים הישירים בקבוצה הזו
+            current_total = sum(player.score for player in self.players)
+            
+            # 2. חישוב הניקוד של כל תתי-הקבוצות (רקורסיה)
+            for sub_group in self.sub_groups:
+                current_total += sub_group.get_total_score() # <--- כאן הפונקציה קוראת לעצמה
+                
+            return current_total
+
 
     def __str__(self):
         return f"\nGroup(Name: {self.group_name}, Players: {[str(player) for player in self.players]})\n"
@@ -88,7 +98,7 @@ class Game_Manager:
                 New_Game_instance = Game(time)     
                  
             elif choice == '2':
-                self._player_maneger_menu()
+                self._player_manager_menu()
 
             elif choice == '3':
                 pass # Logic to view glory hall would go here
@@ -103,7 +113,7 @@ class Game_Manager:
             else:
                 print("\nInvalid choice. Please try again.\n")
 
-    def _player_maneger_menu(self):
+    def _player_manager_menu(self):
         while True:
             print("\n=========================Players Manager=========================\n")
             print("1. Add Player")
