@@ -4,8 +4,8 @@ import random
 
 class New_Game:
     def __init__(self, player1, player2):
-        self.player1 = player1
-        self.player2 = player2
+        self.player1 = player1  # just player name
+        self.player2 = player2  # just player name
 
         self.game_result = 0 # 0 - draw, 1 - player 1 wins, 2 - player 2 wins
 
@@ -36,10 +36,11 @@ class New_Game:
                 if board_size > 2 and board_size < 11:
 
                     board = [[None for i in range(board_size)] for j in range(board_size)] # Initialize empty board
+                    decimal_board = [[None for i in range(board_size)] for j in range(board_size)] # Initialize empty decimal board
 
                     start_time = datetime.datetime.now()
 
-                    self._game_engine(board, board_size)
+                    self._game_engine(board, board_size, decimal_board)
 
                     end_time = datetime.datetime.now()
                     
@@ -51,8 +52,10 @@ class New_Game:
                 else: 
                     print("Invalid board size. Please choose a size between 3 and 10.")
 
-    def _game_engine(self,board, board_size):
+    def _game_engine(self,board, board_size, decimal_board):
         round_count = 0
+        full_board = board_size ** 2
+        filled_cells_counter = 0
 
         while True:   
             round_count += 1
@@ -60,46 +63,67 @@ class New_Game:
             base = random.randint(2,10) # Random base between 2 and 10
             print(f"\n = = = = = = = = = = \n Round {round_count} - base is: {base} \n = = = = = = = = = = \n")
 
-            print(" - - - - - - - - - \n player 1 's turn \n - - - - - - - - - \n")
+            print(f" - - - - - - - - - \n {self.player1}'s turn \n - - - - - - - - - \n")
 
             self._print_board(board,board_size) # Print current board state
 
-            action = input("Choose your action:\n 1) Insert number\n 2) Rotate Board ClockWise\n 3) Rotate Board CounterClockWise\n") # Get player action
-            board, is_winner = self._exe_action(action, board, board_size, base) # Execute player action
+            board, board_size, decimal_board, base, is_winner, filled_cells_counter = self._singel_turn(board, board_size, decimal_board, base, filled_cells_counter)
 
-            if is_winner != 0:
-                self._print_board(board,board_size) # Print current board state
-
-                if is_winner == 1:
-                    print(f"Player 1 wins!")
-                    self.game_result = 1
-
-                elif is_winner == 2:
-                    print(f"The board is full! It's a draw!")
-
+            if self._check_game_status(board, board_size, is_winner, filled_cells_counter, full_board, 1): # if game over
                 break
 
-            print(" - - - - - - - - - \n player 2 's turn \n - - - - - - - - - \n")
+            print(f" - - - - - - - - - \n {self.player2}'s turn \n - - - - - - - - - \n")
 
             self._print_board(board,board_size) # Print current board state
             
-            action = input("Choose your action:\n 1) Insert number\n 2) Rotate Board ClockWise\n 3) Rotate Board CounterClockWise\n") # Get player action
-            board, is_winner = self._exe_action(action, board, board_size, base) # Execute player action
+            board, board_size, decimal_board, base, is_winner, filled_cells_counter = self._singel_turn(board, board_size, decimal_board, base, filled_cells_counter)
 
-            if is_winner != 0:
-                self._print_board(board,board_size) # Print current board state
-
-                if is_winner == 1:
-                    print(f"Player 1 wins!")
-                    self.game_result = 2
-
-                elif is_winner == 2:
-                    print(f"The board is full! It's a draw!")
-                    
+            if self._check_game_status(board, board_size, is_winner, filled_cells_counter, full_board, 2): # if game over
                 break
+
         
         self.rounds_played = round_count
 
+
+    def _singel_turn(self, board, board_size, decimal_board, base, filled_cells_counter):
+            turn_completed = False
+            while not turn_completed:
+                action = input("Choose your action:\n 1) Insert number\n 2) Rotate Board ClockWise\n 3) Rotate Board CounterClockWise\n") # Get player action
+                
+                if action != "1" and action != "2" and action != "3":
+                    print("Invalid action, Please choose 1, 2, or 3.")
+
+                else:
+                    board, decimal_board, is_winner, success = self._exe_action(action, board, board_size, decimal_board, base) # Execute player action
+        
+                    if success:
+                        turn_completed = True
+                        
+                        if action == "1":
+                            filled_cells_counter +=1
+                    else:
+                        print(f"\nAction faild")
+
+            return board, board_size, decimal_board, base, is_winner, filled_cells_counter
+
+    def _check_game_status(self, board, board_size, is_winner, filled_cells_counter, full_board, player):
+        if is_winner == 1:
+            self._print_board(board,board_size) # Print current board state
+            if player == 1:
+                print(f"{self.player1} wins!")
+                self.game_result = 1
+            else:
+                print(f"{self.player2} wins!")
+                self.game_result = 2
+            return True
+        
+        elif filled_cells_counter == full_board:
+            self._print_board(board,board_size) # Print current board state
+            print(f"The board is full! It's a draw!")
+            self.game_result = 0
+            return True
+        
+        return False
 
     def _print_board(self, board, board_size):
         print("\nCurrent board state:\n")
@@ -120,26 +144,50 @@ class New_Game:
 
         print(separator)
 
-    def _exe_action(self, action_number, board, board_size, base):
+    def _exe_action(self, action_number, board, board_size, decimal_board, base):
         is_winner = 0
+        success = False
 
         if action_number == '1': # Insert number
-            board, is_winner = self._insert_number(board, board_size, base)
+            board, decimal_board, is_winner, success = self._insert_number(board, board_size, decimal_board, base)
 
         elif action_number == '2': # Rotate Board ClockWise
 
-            board = self._rotate_clockwise(board, board_size)
+            while True:
+                try: 
+                    number_of_rotations = int(input("Enter number of ClockWise rotations: "))
+                    if number_of_rotations <= 0:
+                        print("\nInvalid number of rotations, Please enter a positive integer.\n")
+                    else:
+                        break
+                except:
+                    print("\nInvalid input, please enter a positive integer")
+
+            board, decimal_board = self._board_rotate(board, board_size, decimal_board, number_of_rotations)
+            success = True
 
         elif action_number == '3': # Rotate Board CounterClockWise
+            while True:
+                try:
+                    number_of_rotations = int(input("Enter number of counterClockWise rotations: "))
+                    if number_of_rotations <= 0:
+                        print("\nInvalid number of rotations, Please enter a positive integer.\n") 
+                    else:
+                        break
+                except:
+                    print("\nInvalid input, please enter a positive integer")
+            
+            fixd_number_of_rotations = (4 - (number_of_rotations % 4)) % 4
 
-            board = self._rotate_counter_clockwise(board, board_size)
+            board, decimal_board = self._board_rotate(board, board_size, decimal_board, fixd_number_of_rotations)
+            success = True
 
         else:
             print("Invalid action, Please choose 1, 2, or 3.")
         
-        return board, is_winner
+        return board, decimal_board, is_winner, success
 
-    def _insert_number(self, board, board_size, base):
+    def _insert_number(self, board, board_size, decimal_board, base):
 
         while True:
             try: 
@@ -161,8 +209,15 @@ class New_Game:
 
                 else:
                     board[row][col] = (number, int(base))  # Insert number into the board as tuple - (number:str base:int)
-                    is_winner = self._check_winner(board, board_size, row, col)  # Check for a winner
-                    return board, is_winner
+
+                    if base != 10:
+                        decimal_val = self._convert_to_decimal(number, int(base))
+                        decimal_board[row][col] = decimal_val # Insert number into the board as float
+                    else:
+                        decimal_board[row][col] = str(float(number)) # Insert number into the board as float
+
+                    is_winner = self._check_winner(decimal_board, board_size, row, col)  # Check for a winner
+                    return board, decimal_board, is_winner, True
                 
             except:
                 print("\nInvalid input, please try again.\n")
@@ -191,69 +246,31 @@ class New_Game:
         
         return True
 
-    def _rotate_clockwise(self, board, board_size):
-        while True:
-            try:
-                number_of_rotations = int(input("Enter number of ClockWise rotations: "))
-
-                if number_of_rotations <= 0:
-                    print("\nInvalid number of rotations, Please enter a positive integer.\n")
-
-                else:
-                    for rotate in range(number_of_rotations % 4):
-                        new_board = [[None for i in range(board_size)] for j in range(board_size)]
-                        for i in range(board_size):
-                            for j in range(board_size):
-                                new_board[j][board_size - 1 - i] = board[i][j]
-                        board = new_board
-                    
-                    return board
-            except:
-                print("\nInvalid input, please enter a number\n")
+    def _board_rotate(self, board, board_size, decimal_board, number_of_rotations):
+                for rotate in range(number_of_rotations % 4):
+                    new_board = [[None for i in range(board_size)] for j in range(board_size)] 
+                    new_decimal_board = [[None for i in range(board_size)] for j in range(board_size)] # decimal board
+                    for i in range(board_size):
+                        for j in range(board_size):
+                            new_board[j][board_size - 1 - i] = board[i][j]
+                            new_decimal_board[j][board_size - 1 - i] = decimal_board[i][j]
+                    board = new_board
+                    decimal_board = new_decimal_board
                 
-    def _rotate_counter_clockwise(self, board, board_size):
-        while True:
-            try:
-                number_of_rotations = int(input("Enter number of counterClockWise rotations: "))
-
-                if number_of_rotations <= 0:
-                    print("\nInvalid number of rotations, Please enter a positive integer.\n") 
-                
-                else:
-                    for rotate in range(number_of_rotations % 4):
-                        new_board = [[None for i in range(board_size)] for j in range(board_size)]
-                        for i in range(board_size):
-                            for j in range(board_size):
-                                new_board[board_size - 1 - j][i] = board[i][j]
-                        board = new_board
-
-                    return board
-            except:
-                print("\nInvalid input, please enter a number\n")
-
-    def _check_equality(self, number_val_1, base_val_1, number_val_2, base_val_2):
+                return board, decimal_board
         
-        if base_val_1 == base_val_2 and number_val_1 == number_val_2:
-            return True
+    def _check_winner(self, decimal_board, board_size, row, col):
 
-        elif self._convert_to_decimal(number_val_1, base_val_1) == self._convert_to_decimal(number_val_2, base_val_2):
-            return True
-        
-
-        return False
-
-    def _check_winner(self, board, board_size, row, col):
-
-        last_cell_number_val, last_cell_base_val = board[row][col] # last inserted cell values
+        last_cell_number_val = decimal_board[row][col] # last inserted cell values
 
         win = True
         for i in range(board_size):  # Check for win in row
-            if board[row][i] is None:
+            if decimal_board[row][i] is None:
                 win = False
                 break
 
-            check_number_val, check_base_val = board[row][i]
-            if not self._check_equality(last_cell_number_val, last_cell_base_val, check_number_val, check_base_val):
+            check_number_val = decimal_board[row][i]
+            if last_cell_number_val != check_number_val:
                 win = False
                 break        
         if win:
@@ -261,12 +278,12 @@ class New_Game:
 
         win = True
         for i in range(board_size):  # Check for win in column
-            if board[i][col] is None:
+            if decimal_board[i][col] is None:
                 win = False
                 break
 
-            check_number_val, check_base_val = board[i][col]
-            if not self._check_equality(last_cell_number_val, last_cell_base_val, check_number_val, check_base_val):
+            check_number_val = decimal_board[i][col]
+            if last_cell_number_val != check_number_val:
                 win = False
                 break
         if win:
@@ -275,11 +292,11 @@ class New_Game:
         if row == col: # check diagonal only if the last cell was on it
             win = True
             for i in range(board_size): # Diagonal 1 (top-left to bottom-right)
-                if board[i][i] is None:
+                if decimal_board[i][i] is None:
                     win = False
                     break
-                check_number_val, check_base_val = board[i][i]
-                if not self._check_equality(last_cell_number_val, last_cell_base_val, check_number_val, check_base_val):
+                check_number_val = decimal_board[i][i]
+                if last_cell_number_val != check_number_val:
                     win = False
                     break
             if win:
@@ -289,22 +306,17 @@ class New_Game:
             win = True
             for i in range(board_size): # Diagonal 2 (top-right to bottom-left)
                 c = board_size - 1 - i
-                if board[i][c] is None:
+                if decimal_board[i][c] is None:
                     win = False
                     break
-                check_number_val, check_base_val = board[i][c]
-                if not self._check_equality(last_cell_number_val, last_cell_base_val, check_number_val, check_base_val):
+                check_number_val = decimal_board[i][c]
+                if last_cell_number_val != check_number_val:
                     win = False
                     break
             if win:
                 return 1  # Winner
             
-        for i in range(board_size): # Check if the board is full
-            for j in range(board_size):
-                if board[i][j] is None:
-                    return 0 # Game continues
-                
-        return 2   # Draw
+        return 0
 
     def _convert_to_decimal(self, number_val, base_val):
         if base_val != 10:
@@ -322,7 +334,8 @@ class New_Game:
                 decimal_value += int(number_val[j]) * (base_val ** i)
                 j += 1
 
-            return float(decimal_value)
+            return str(float(decimal_value))
+        
+        return str(float(number_val))
 
-        return float(number_val)
 
