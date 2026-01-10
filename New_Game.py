@@ -28,7 +28,7 @@ class New_Game:
             board_size = input("Choose board size (3-10): ") # Get board size from user
 
             if not board_size.isdigit():
-                print("Invalid input' enter number between 3 and 10.")
+                print("Invalid input, enter number between 3 and 10.")
             
             else:
                 board_size = int(board_size)
