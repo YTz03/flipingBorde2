@@ -62,19 +62,21 @@ class Group:
 class Game:
     def __init__(self, player1: Player, player2: Player):
         self.date = datetime.datetime.now()
+        self.formatted_date = self.date.strftime("%d/%m/%Y %H:%M")
+
         self.duration = 0
         self.rounds_played = 0
         self.players = [player1, player2]  # List of Player objects
-        self.winner:Player = None
-        self.loser:Player = None
         self.draw = False
 
-        self.start_game()
+        self.winner:Player = None
+        self.loser:Player = None
+
     
     def start_game(self):        
 
-        new_game_instet =  New_Game(self.players[0].name, self.players[1].name)
-        game_result, self.rounds_played, self.duration = new_game_instet.play() # 
+        new_game_instance =  New_Game(self.players[0].name, self.players[1].name)
+        game_result, self.rounds_played, self.duration = new_game_instance.play() # 
 
         if game_result != 0: # if not a draw
             self.winner = self.players[game_result - 1]
@@ -93,13 +95,13 @@ class Game:
     def _game_summary(self):
         print("\n===============Game Summary===============\n")
 
-        print(f"Date: {self.date}")
+        print(f"Date: {self.formatted_date}")
 
         if self.draw:
-            print(f"Game ended in a draw, Rounds Played: {self.rounds_played}, Duration: {self.duration}")
+            print(f"Game ended in a draw, Rounds Played: {self.rounds_played}, Duration: {self.duration} sec")
             
         else:
-            print(f"Winner: {self.winner.name}, Loser: {self.loser.name}, Rounds Played: {self.rounds_played}, Duration: {self.duration}")
+            print(f"Winner: {self.winner.name}, Loser: {self.loser.name}, Rounds Played: {self.rounds_played}, Duration: {self.duration} sec")
         
         for player in self.players:
             player.print_player_score()
@@ -108,14 +110,14 @@ class Game:
 
     def game_info(self, index):
 
-        print(f"{index}. Date: {self.date}\n"
-                    f"Duration: {self.duration}\n"
+        print(f"{index}. Date: {self.formatted_date}\n"
+                    f"Duration: {self.duration} sec\n"
                     f"Rounds: {self.rounds_played}\n")
         if self.draw:
             print(f"Draw ({self.players[0].name} VS {self.players[1].name})")              
             
         else:
-            print(f"Winner: {self.winner} , Loser: {self.loser}")
+            print(f"Winner: {self.winner.name} , Loser: {self.loser.name}")
 
 
 class Game_Manager:
@@ -126,7 +128,10 @@ class Game_Manager:
             self.games_history_list: list[Game] = [] # list of Game objects
 
             print("\n================================= Welcome to the Board Game! =================================\n")
-            self._main_menu()
+
+
+    def launch_game(self):
+        self._main_menu()
 
 
 # main menu 
@@ -174,36 +179,37 @@ class Game_Manager:
             self._print_players()
 
             player1_number = input("Enter the player number for player1: ")
-            palyer2_number = input("Enter the player number for player2: ")
+            player2_number = input("Enter the player number for player2: ")
 
-            if player1_number == '0' or palyer2_number == '0':
+            if player1_number == '0' or player2_number == '0':
                 print("\nNew game cancelled.\n")
                 break
 
-            elif player1_number == palyer2_number:
+            elif player1_number == player2_number:
                 print("\nPlayer1 and Player2 cannot be the same. Please try again.\n")
 
             elif not player1_number.isdigit() or int(player1_number) < 1 or int(player1_number) > len(self.players_dict):
                 print("\nInvalid player1 number. Please try again.\n")
             
-            elif not palyer2_number.isdigit() or int(palyer2_number) < 1 or int(palyer2_number) > len(self.players_dict):
+            elif not player2_number.isdigit() or int(player2_number) < 1 or int(player2_number) > len(self.players_dict):
                 print("\nInvalid player2 number. Please try again.\n")
 
             else:
                 player1 = list(self.players_dict.values())[int(player1_number) - 1]
-                player2 = list(self.players_dict.values())[int(palyer2_number) - 1]
+                player2 = list(self.players_dict.values())[int(player2_number) - 1]
                 
                 if max(player1.age, player2.age) - min(player1.age, player2.age) > 10:
                     print("\nThe age difference between players cannot exceed 10 years. New game cancelled.\n")
                     break
 
                 else:
-                    new_game_obj = Game(player1.name, player2.name)
+                    new_game_obj = Game(player1, player2)
+                    new_game_obj.start_game()
                     self.games_history_list.append(new_game_obj)   
                     break          
 
     def glory_hall(self):
-        print("\n===============Glory hall===============\n")
+        print("\n===============Hall of fame===============\n")
 
         print("\n=====Top 5 Players=====")
         if not self.players_dict:
@@ -212,7 +218,7 @@ class Game_Manager:
             index = 1
             for player in self._sort_players_by_score():
                 indent = ('-')*(20-len(player.name))
-                print(f"{index}. Player: {player.name} {indent} {player.score} pts")
+                print(f"{index}. {player.name} {indent} {player.score} pts")
                 index += 1
             
         print("\n=====Top 5 Groups=====")
@@ -222,7 +228,7 @@ class Game_Manager:
             index = 1
             for group in self._sort_groups_by_score():
                 indent = ('-')*(20-len(group.group_name))
-                print(f"{index}.Group: {group.group_name} {indent} {group.get_total_score()} pts")
+                print(f"{index}. {group.group_name} {indent} {group.get_total_score()} pts")
                 index += 1
         
         print("\n=================================\n")
@@ -290,13 +296,13 @@ class Game_Manager:
                 break
 
             player_name = input("Enter player name: ")
-            player_age = input("Enter player age (Year's only): ")
+            player_age = input("Enter player age (Years only): ")
 
             if not self.groups_dict: # check if there are no groups befor asking the player to choose a group
                 print("\nNo groups available\n")
-                player_group_choise = 'n'
+                player_group_choice = 'n'
             else:
-                player_group_choise = input("Whould you like to assign the player to a group ? (y/n): ")
+                player_group_choice = input("Would you like to assign the player to a group ? (y/n): ")
 
             if player_name in self.players_dict:
                 print("\nPlayer already exists. Please choose a different name.\n")
@@ -309,13 +315,13 @@ class Game_Manager:
 
                 print("\nInvalid age. Please enter a valid age between 1 and 120.\n")
             
-            elif player_group_choise == "n":
+            elif player_group_choice == "n":
                 print("The player will not be assigned to any group")
                 new_player = Player(player_name, int(player_age), None) #create obj player without group
                 self.players_dict[player_name] = new_player # add player obj to players dict
                 break
             
-            elif player_group_choise == 'y':
+            elif player_group_choice == 'y':
                 self._print_groups()
                 group_number = input("Enter the group number to assign the player to: ")
 
@@ -369,9 +375,9 @@ class Game_Manager:
 
             if not self.groups_dict: # check if there are no groups befor asking the player to choose a group
                 print("\nNo groups available\n")
-                mother_group_choise = 'n'
+                mother_group_choice = 'n'
             else:
-                mother_group_choise = input("Would you like to assign a mother group ? (y/n): ")
+                mother_group_choice = input("Would you like to assign a mother group ? (y/n): ")
 
             if group_name in self.groups_dict:
                 print("\nGroup already exists. Please choose a different name.\n")
@@ -379,12 +385,12 @@ class Game_Manager:
             elif not self._validate_name(group_name):
                 print("\nInvalid group name. Please enter a valid name.\n")
             
-            elif mother_group_choise == 'n':
+            elif mother_group_choice == 'n':
                 new_group = Group(group_name) #create obj group without mother group
                 self.groups_dict[group_name] = new_group # add group obj to groups dict
                 break
 
-            elif mother_group_choise == 'y':
+            elif mother_group_choice == 'y':
                 self._print_groups()
                 group_number = input("Enter the group number to assign as mother group: ")
 
@@ -454,7 +460,7 @@ class Game_Manager:
                     self._print_group_tree(group, 0)
 
 
-# helpter methods
+# helper methods
     def _print_group_tree(self, group, level):
 
         indent_group = "    " * level
@@ -478,7 +484,7 @@ class Game_Manager:
             print("0. Cancel\n")
             number = 1
             for group in self.groups_dict.values():
-                print(f"{number}. {group}")
+                print(f"{number}. {group.group_name}")
                 number += 1
         
     def _print_players(self):
@@ -490,7 +496,7 @@ class Game_Manager:
             print("0. Cancel\n")
             number = 1
             for player in self.players_dict.values():
-                print(f"{number}. {player}")
+                print(f"{number}. {player.name}")
                 number += 1
         
     def _validate_name(self, name):
