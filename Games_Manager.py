@@ -300,6 +300,7 @@ class Game_Manager:
 
             if not self.groups_dict: # check if there are no groups befor asking the player to choose a group
                 print("\nNo groups available\n")
+                print("\nPlayer will be created without a group\n")
                 player_group_choice = 'n'
             else:
                 player_group_choice = input("Would you like to assign the player to a group ? (y/n): ")
@@ -375,6 +376,8 @@ class Game_Manager:
 
             if not self.groups_dict: # check if there are no groups befor asking the player to choose a group
                 print("\nNo groups available\n")
+                print("\nGroup will be created without mother group\n")
+
                 mother_group_choice = 'n'
             else:
                 mother_group_choice = input("Would you like to assign a mother group ? (y/n): ")

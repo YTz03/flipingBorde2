@@ -7,7 +7,7 @@ class New_Game:
         self.player1 = player1  # just player name
         self.player2 = player2  # just player name
 
-        self.game_result = 0 # 0 - draw, 1 - player 1 wins, 2 - player 2 wins
+        self.game_result:int = 0 # 0 - draw, 1 - player 1 wins, 2 - player 2 wins
 
         self.rounds_played = 0
 
@@ -67,7 +67,7 @@ class New_Game:
 
             self._print_board(board,board_size) # Print current board state
 
-            board, board_size, decimal_board, base, is_winner, filled_cells_counter = self._singel_turn(board, board_size, decimal_board, base, filled_cells_counter)
+            board, board_size, decimal_board, base, is_winner, filled_cells_counter = self._single_turn(board, board_size, decimal_board, base, filled_cells_counter)
 
             if self._check_game_status(board, board_size, is_winner, filled_cells_counter, full_board, 1): # if game over
                 break
@@ -76,7 +76,7 @@ class New_Game:
 
             self._print_board(board,board_size) # Print current board state
             
-            board, board_size, decimal_board, base, is_winner, filled_cells_counter = self._singel_turn(board, board_size, decimal_board, base, filled_cells_counter)
+            board, board_size, decimal_board, base, is_winner, filled_cells_counter = self._single_turn(board, board_size, decimal_board, base, filled_cells_counter)
 
             if self._check_game_status(board, board_size, is_winner, filled_cells_counter, full_board, 2): # if game over
                 break
@@ -85,7 +85,7 @@ class New_Game:
         self.rounds_played = round_count
 
 
-    def _singel_turn(self, board, board_size, decimal_board, base, filled_cells_counter):
+    def _single_turn(self, board, board_size, decimal_board, base, filled_cells_counter):
             turn_completed = False
             while not turn_completed:
                 action = input("Choose your action:\n 1) Insert number\n 2) Rotate Board ClockWise\n 3) Rotate Board CounterClockWise\n") # Get player action
