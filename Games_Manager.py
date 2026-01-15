@@ -299,8 +299,7 @@ class Game_Manager:
             player_age = input("Enter player age (Years only): ")
 
             if not self.groups_dict: # check if there are no groups befor asking the player to choose a group
-                print("\nNo groups available\n")
-                print("\nPlayer will be created without a group\n")
+                print("\nNo groups yet, player can't be assigned to group\n")
                 player_group_choice = 'n'
             else:
                 player_group_choice = input("Would you like to assign the player to a group ? (y/n): ")
@@ -375,8 +374,7 @@ class Game_Manager:
             group_name = input("Enter the new group name: ")
 
             if not self.groups_dict: # check if there are no groups befor asking the player to choose a group
-                print("\nNo groups available\n")
-                print("\nGroup will be created without mother group\n")
+                print("\nNo groups yet, group can't be assigned to mother group\n")
 
                 mother_group_choice = 'n'
             else:
@@ -384,7 +382,7 @@ class Game_Manager:
 
             if group_name in self.groups_dict:
                 print("\nGroup already exists. Please choose a different name.\n")
-
+            
             elif not self._validate_name(group_name):
                 print("\nInvalid group name. Please enter a valid name.\n")
             
@@ -395,6 +393,7 @@ class Game_Manager:
 
             elif mother_group_choice == 'y':
                 self._print_groups()
+
                 group_number = input("Enter the group number to assign as mother group: ")
 
                 if not group_number.isdigit() or int(group_number) < 1 or int(group_number) > len(self.groups_dict):
